@@ -23,24 +23,39 @@ class EditorScreen extends StatefulWidget {
 
 class _EditorScreenState extends State<EditorScreen> {
   late int _toneIndex;
+  late bool _filterEnabled;
   Uint8List? _previewBytes;
   bool _showOriginal = false;
   bool _saving = false;
   bool _previewing = false;
   int _previewGeneration = 0;
-  final Map<int, Uint8List> _previewCache = {};
+  GrainLevel _grain = GrainLevel.off;
+  FrameStyle _frame = FrameStyle.none;
+  NoteOptions _note = const NoteOptions();
+  late final TextEditingController _noteTextController;
+  final Map<String, Uint8List> _previewCache = {};
   Timer? _previewTimer;
 
   @override
   void initState() {
     super.initState();
     _toneIndex = widget.initialToneIndex;
+    _filterEnabled = false;
+    _noteTextController = TextEditingController();
     _updatePreview();
   }
 
   Future<void> _updatePreview() async {
     final generation = ++_previewGeneration;
-    final cached = _previewCache[_toneIndex];
+    final toneIndex = _toneIndex;
+    final grain = _grain;
+    final frame = _frame;
+    final note = _note;
+    final noteKey =
+        '${note.text}:${note.includeDate}:${note.fontSize}:${note.frameThickness}';
+    final cacheKey =
+        '$_filterEnabled:$toneIndex:${grain.index}:${frame.index}:$noteKey';
+    final cached = _previewCache[cacheKey];
     if (cached != null) {
       setState(() {
         _previewBytes = cached;
@@ -51,14 +66,31 @@ class _EditorScreenState extends State<EditorScreen> {
 
     setState(() => _previewing = true);
     try {
+      if (!_filterEnabled &&
+          grain == GrainLevel.off &&
+          frame == FrameStyle.none &&
+          !note.enabled) {
+        if (mounted && generation == _previewGeneration) {
+          _previewCache[cacheKey] = widget.imageBytes;
+          setState(() {
+            _previewBytes = widget.imageBytes;
+            _previewing = false;
+          });
+        }
+        return;
+      }
       final bytes = await ImageProcessor.processBytes(
         sourceBytes: widget.imageBytes,
-        lutAssetPath: kFilmTones[_toneIndex].lutPath,
-        toneId: kFilmTones[_toneIndex].id,
-        maxDimension: 900,
+        lutAssetPath: kFilmTones.first.lutPath,
+        toneId: _filterEnabled ? kFilmTones[toneIndex].id : 'none',
+        grain: grain,
+        frame: frame,
+        note: note,
+        applyFilter: _filterEnabled,
+        maxDimension: 720,
       );
       if (mounted && generation == _previewGeneration) {
-        _previewCache[_toneIndex] = bytes;
+        _previewCache[cacheKey] = bytes;
         setState(() => _previewBytes = bytes);
       }
     } finally {
@@ -73,13 +105,17 @@ class _EditorScreenState extends State<EditorScreen> {
     try {
       final output = await ImageProcessor.applyTone(
         sourceBytes: widget.imageBytes,
-        lutAssetPath: kFilmTones[_toneIndex].lutPath,
-        toneId: kFilmTones[_toneIndex].id,
+        lutAssetPath: kFilmTones.first.lutPath,
+        toneId: _filterEnabled ? kFilmTones[_toneIndex].id : 'none',
+        grain: _grain,
+        frame: _frame,
+        note: _note,
+        applyFilter: _filterEnabled,
       );
 
       if (!mounted) return;
 
-      Navigator.pushAndRemoveUntil(
+      Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => ResultScreen(
@@ -87,7 +123,6 @@ class _EditorScreenState extends State<EditorScreen> {
             imageBytes: output.bytes,
           ),
         ),
-        (route) => route.isFirst, // Keep Home and remove Editor.
       );
     } catch (e) {
       if (!mounted) return;
@@ -133,44 +168,7 @@ class _EditorScreenState extends State<EditorScreen> {
                         : Image.memory(_previewBytes!, fit: BoxFit.contain),
               ),
             ),
-            SizedBox(
-              height: 80,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: kFilmTones.length,
-                itemBuilder: (_, i) {
-                  final selected = _toneIndex == i;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() => _toneIndex = i);
-                      _previewTimer?.cancel();
-                      _previewTimer = Timer(
-                        const Duration(milliseconds: 120),
-                        _updatePreview,
-                      );
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 10),
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: selected ? Colors.white : Colors.white12,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        kFilmTones[i].name,
-                        style: TextStyle(
-                          color: selected ? Colors.black : Colors.white,
-                          fontWeight:
-                              selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
+            _buildOptions(),
             Padding(
               padding: const EdgeInsets.all(16),
               child: Listener(
@@ -195,9 +193,259 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
+  Widget _buildOptions() {
+    return SizedBox(
+      height: 320,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        children: [
+          _buildSection(
+            title: 'Filter',
+            icon: Icons.auto_awesome,
+            summary: _filterEnabled ? kFilmTones[_toneIndex].name : 'No Filter',
+            child: _buildChoices(
+              values: <String>[
+                'No Filter',
+                ...kFilmTones.map((tone) => tone.name),
+              ],
+              selected:
+                  _filterEnabled ? kFilmTones[_toneIndex].name : 'No Filter',
+              label: (value) => value,
+              onSelected: (value) {
+                setState(() {
+                  if (value == 'No Filter') {
+                    _filterEnabled = false;
+                  } else {
+                    _filterEnabled = true;
+                    _toneIndex =
+                        kFilmTones.indexWhere((tone) => tone.name == value);
+                  }
+                });
+                _schedulePreview();
+              },
+            ),
+          ),
+          _buildSection(
+            title: 'Grain',
+            icon: Icons.grain,
+            summary: _grain.label,
+            child: _buildChoices(
+              values: GrainLevel.values,
+              selected: _grain,
+              label: (value) => value.label,
+              onSelected: (value) {
+                setState(() => _grain = value);
+                _schedulePreview();
+              },
+            ),
+          ),
+          _buildSection(
+            title: 'Frame & Note',
+            icon: Icons.crop_square,
+            summary:
+                '${_frame.label} · ${_frame == FrameStyle.none ? 'No Note' : (_note.enabled ? 'Note On' : 'No Note')}',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildChoices(
+                  values: FrameStyle.values,
+                  selected: _frame,
+                  label: (value) => value.label,
+                  onSelected: (value) {
+                    setState(() => _frame = value);
+                    _schedulePreview();
+                  },
+                ),
+                if (_frame != FrameStyle.none) ...[
+                  const SizedBox(height: 8),
+                  _buildNoteControls(),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required String summary,
+    required Widget child,
+  }) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 3),
+      color: Colors.white.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+          splashColor: Colors.white10,
+        ),
+        child: ExpansionTile(
+          leading: Icon(icon, color: Colors.white70),
+          title:
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: Text(summary,
+              style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          childrenPadding:
+              const EdgeInsets.only(left: 16, right: 16, bottom: 10),
+          children: [child],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChoices<T>({
+    required List<T> values,
+    required T selected,
+    required String Function(T) label,
+    required ValueChanged<T> onSelected,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: values
+          .map((value) => ChoiceChip(
+                label: Text(label(value)),
+                selected: value == selected,
+                onSelected: (_) => onSelected(value),
+              ))
+          .toList(),
+    );
+  }
+
+  Widget _buildNoteControls() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: _noteTextController,
+          maxLength: 32,
+          decoration: const InputDecoration(
+            labelText: 'Note text (optional)',
+            hintText: 'e.g. Utsurikomi',
+            isDense: true,
+          ),
+          onChanged: (value) {
+            setState(() => _note = NoteOptions(
+                  text: value,
+                  includeDate: _note.includeDate,
+                  fontSize: _note.fontSize,
+                  color: _note.color,
+                  frameThickness: _note.frameThickness,
+                ));
+            _schedulePreview();
+          },
+        ),
+        CheckboxListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Add today\'s date'),
+          value: _note.includeDate,
+          onChanged: (value) {
+            setState(() => _note = NoteOptions(
+                  text: _note.text,
+                  includeDate: value ?? false,
+                  fontSize: _note.fontSize,
+                  color: _note.color,
+                  frameThickness: _note.frameThickness,
+                ));
+            _schedulePreview();
+          },
+        ),
+        _buildSlider(
+          label: 'Text size',
+          value: _note.fontSize.toDouble(),
+          min: 14,
+          max: 48,
+          divisions: 2,
+          valueLabel: '${_note.fontSize}',
+          onChanged: (value) {
+            setState(() => _note = NoteOptions(
+                  text: _note.text,
+                  includeDate: _note.includeDate,
+                  fontSize: value.round(),
+                  color: _note.color,
+                  frameThickness: _note.frameThickness,
+                ));
+            _schedulePreview();
+          },
+        ),
+        _buildSlider(
+          label: 'Frame thickness',
+          value: _note.frameThickness.toDouble(),
+          min: 2,
+          max: 10,
+          divisions: 8,
+          valueLabel: '${_note.frameThickness}%',
+          onChanged: (value) {
+            setState(() => _note = NoteOptions(
+                  text: _note.text,
+                  includeDate: _note.includeDate,
+                  fontSize: _note.fontSize,
+                  color: _note.color,
+                  frameThickness: value.round(),
+                ));
+            _schedulePreview();
+          },
+        ),
+        Text(
+          _frame == FrameStyle.black
+              ? 'Text color: White (automatic)'
+              : 'Text color: Black (automatic)',
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSlider({
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required int divisions,
+    required String valueLabel,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 112,
+          child: Text(label, style: const TextStyle(fontSize: 12)),
+        ),
+        Expanded(
+          child: Slider(
+            min: min,
+            max: max,
+            divisions: divisions,
+            value: value,
+            label: valueLabel,
+            onChanged: onChanged,
+          ),
+        ),
+        SizedBox(
+          width: 40,
+          child: Text(valueLabel, textAlign: TextAlign.end),
+        ),
+      ],
+    );
+  }
+
+  void _schedulePreview() {
+    _previewTimer?.cancel();
+    _previewTimer = Timer(
+      const Duration(milliseconds: 120),
+      _updatePreview,
+    );
+  }
+
   @override
   void dispose() {
     _previewTimer?.cancel();
+    _noteTextController.dispose();
     super.dispose();
   }
 }
