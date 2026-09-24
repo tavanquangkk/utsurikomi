@@ -29,13 +29,13 @@ class ResultScreen extends StatelessWidget {
 
       if (result != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Đã lưu vào thư viện')),
+          const SnackBar(content: Text('✅ Saved to Gallery')),
         );
       }
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
@@ -43,7 +43,7 @@ class ResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Kết quả')),
+      appBar: AppBar(title: const Text('Result')),
       body: SafeArea(
         child: Column(
           children: [
@@ -59,7 +59,7 @@ class ResultScreen extends StatelessWidget {
                     gaplessPlayback: false,
                     errorBuilder: (_, error, __) {
                       return Center(
-                        child: Text('Lỗi: $error',
+                        child: Text('Error: $error',
                             style: const TextStyle(color: Colors.white)),
                       );
                     },
@@ -67,7 +67,7 @@ class ResultScreen extends StatelessWidget {
             ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
-              child: Text('✅ Đã xử lý xong',
+              child: Text('✅ Processing complete',
                   style: TextStyle(color: Colors.white70)),
             ),
             Padding(
@@ -84,7 +84,7 @@ class ResultScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Lưu vào thư viện'),
+                      child: const Text('Save to Gallery'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -98,7 +98,7 @@ class ResultScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Chia sẻ'),
+                      child: const Text('Share'),
                     ),
                   ),
                 ],
@@ -108,7 +108,7 @@ class ResultScreen extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 16),
               child: TextButton(
                 onPressed: () => Navigator.popUntil(context, (r) => r.isFirst),
-                child: const Text('Làm mới',
+                child: const Text('Start Over',
                     style: TextStyle(color: Colors.white70)),
               ),
             ),

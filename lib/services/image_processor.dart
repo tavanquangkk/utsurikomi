@@ -52,9 +52,9 @@ class ImageProcessor {
     required int maxDimension,
   }) {
     final decoded = img.decodeImage(sourceBytes);
-    if (decoded == null) throw Exception('Không đọc được ảnh');
+    if (decoded == null) throw Exception('Unable to read image');
 
-    // Resize nếu ảnh quá lớn (tránh lag)
+    // Resize large images to keep processing responsive.
     final largestDimension =
         decoded.width > decoded.height ? decoded.width : decoded.height;
     final src = largestDimension > maxDimension

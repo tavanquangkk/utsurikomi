@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Chọn ảnh từ thư viện',
+                  child: const Text('Choose from Gallery',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                 ),

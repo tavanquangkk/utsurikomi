@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 
 class CubeLut {
   final int size;
-  final Float32List data; // RGB float, dài = size^3 * 3
+  final Float32List data; // RGB float, length = size^3 * 3
 
   CubeLut._(this.size, this.data);
 
-  /// Đọc file .cube từ asset
+  /// Reads a .cube file from assets.
   static Future<CubeLut> fromAsset(String assetPath) async {
     final raw = await rootBundle.loadString(assetPath);
     return CubeLut._parse(raw);
@@ -40,13 +40,13 @@ class CubeLut {
     }
 
     if (size == 0 || values.length != size * size * size * 3) {
-      throw Exception('File .cube không hợp lệ');
+      throw Exception('Invalid .cube file');
     }
 
     return CubeLut._(size, Float32List.fromList(values));
   }
 
-  /// Tra cứu màu với nội suy tam tuyến tính
+  /// Looks up a color with trilinear interpolation.
   List<int> lookup(int r, int g, int b) {
     final rf = r / 255.0 * (size - 1);
     final gf = g / 255.0 * (size - 1);

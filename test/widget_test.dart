@@ -20,7 +20,7 @@ void main() {
       );
       expect(find.text(tone.name), findsOneWidget);
     }
-    expect(find.text('Chọn ảnh từ thư viện'), findsOneWidget);
+    expect(find.text('Choose from Gallery'), findsOneWidget);
   });
 
   test('Each LUT produces an output image', () async {
