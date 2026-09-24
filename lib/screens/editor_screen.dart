@@ -87,12 +87,12 @@ class _EditorScreenState extends State<EditorScreen> {
             imageBytes: output.bytes,
           ),
         ),
-        (route) => route.isFirst, // giữ Home, xóa Editor
+        (route) => route.isFirst, // Keep Home and remove Editor.
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -113,7 +113,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     height: 18,
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
-                : const Text('Lưu',
+                : const Text('Apply',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -184,7 +184,7 @@ class _EditorScreenState extends State<EditorScreen> {
                     border: Border.all(color: Colors.white38),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text('Giữ để xem ảnh gốc',
+                  child: const Text('Hold to view original',
                       style: TextStyle(color: Colors.white70)),
                 ),
               ),
