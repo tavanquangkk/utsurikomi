@@ -15,6 +15,8 @@ dependencies:
     share_plus: ^10.0.0
     image_gallery_saver_plus: ^4.0.1
     google_fonts: ^6.2.1
+    ffi: ^2.1.2
+    camera: ^0.11.0+2
 
 dev_dependencies:
     flutter_test:

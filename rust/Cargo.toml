@@ -1,0 +1,13 @@
+[package]
+name = "utsurikomi_native"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "utsurikomi_native"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+image = { version = "0.25.1", default-features = false, features = ["jpeg", "png"] }
+rayon = "1.10.0"
+ab_glyph = "0.2.28"
