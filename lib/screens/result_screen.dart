@@ -51,7 +51,17 @@ class ResultScreen extends StatelessWidget {
               child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
-                  color: Colors.grey[900],
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF211E1A),
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
                   child: Image.memory(
                     imageBytes,
                     key: ValueKey(imagePath),
@@ -78,8 +88,8 @@ class ResultScreen extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () => _saveToGallery(context),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.white38),
+                        foregroundColor: const Color(0xFFF2E8D5),
+                        side: const BorderSide(color: Color(0xFF806C51)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -92,8 +102,6 @@ class ResultScreen extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: _share,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),

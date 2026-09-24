@@ -1,0 +1,40 @@
+Release name:
+1.0.0
+
+App name:
+Utsurikomi — Film Camera
+
+Short description:
+Apply cinematic film looks to your photos.
+
+Full description:
+Utsurikomi is a simple photo editing app for creating cinematic film-inspired images.
+
+Choose a photo from your device, preview different looks, and apply a film-style color grade. All image processing takes place locally on your device. You can save the edited photo to your gallery or share it with another app.
+
+Features:
+• Five cinematic film-inspired looks
+• Film grain controls: subtle, classic, and strong
+• Optional classic white and black frames
+• Add a custom note and date to the frame
+• Fast local photo processing
+• Real-time filter preview
+• Save edited photos to your gallery
+• Share edited photos
+• No account required
+• No photo upload or tracking
+
+Utsurikomi is designed to make creative photo editing simple and easy to use.
+
+Release notes:
+
+<en-US>
+Initial release of Utsurikomi.
+
+• Five cinematic film-inspired looks
+• Add film grain and classic frames
+• Add custom frame notes with adjustable size and color
+• Fast local photo processing
+• Preview, save, and share edited photos
+• No account required
+</en-US>
