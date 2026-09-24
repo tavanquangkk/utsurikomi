@@ -1,191 +1,203 @@
 # Utsurikomi
 
-Utsurikomi is a local-first Flutter photo editor for creating film-inspired images. Choose a photo, preview a film look, add grain or a frame, and save or share the result without uploading the original image.
+Utsurikomi is a local-first, high-performance Flutter photo editor and film camera app for creating film-inspired images. Take photos directly with a retro film viewfinder or choose photos from your gallery, apply custom 3D LUT color grades, adjust film grain and lighting, add vintage frames with custom notes, and save or share the result without uploading images to any server.
 
-## Features
+---
 
-- Five film-inspired LUT looks:
+## Key Features
+
+- **High-Performance Native Engine:**
+  - Powered by **Rust** with SIMD acceleration and **Rayon** multi-threading for sub-50ms high-resolution image processing (10x–50x faster than pure Dart).
+  - EXIF orientation auto-correction.
+  - Transparent `dart:ffi` binding with fallback to Dart Isolate.
+
+- **In-App Retro Film Camera Viewfinder:**
+  - Built-in vintage film viewfinder with real-time film tone selection.
+  - Shutter button with haptic feedback.
+  - Flash control (Off, Auto, Always) and Camera Flip (Front/Rear).
+
+- **Five Film-Inspired LUT Looks:**
   - Fuji Low
   - Cinematic Film
   - Cinematic Look
   - Vintage Warmth
   - Rabbit Film
-- **No Filter** mode for editing without color grading
-- Film grain controls:
-  - No Grain
-  - Subtle
-  - Classic
-  - Strong
-- Frame styles:
-  - No Frame
-  - Classic White
-  - Black Border
-- Optional frame note with:
-  - Custom text
-  - Current date
-  - Adjustable text size
-  - Automatic text color based on the frame color
-  - Adjustable frame thickness
-- Full-resolution export when applying edits
-- Preview processing in a background isolate
-- Save edited images to the device gallery
-- Share edited images with other apps
-- No account, backend, analytics, advertisements, or image upload
+  - **No Filter** mode for editing without color grading.
 
-## User flow
+- **Horizontal Film LUT Thumbnail Strip (VSCO / Lightroom Style):**
+  - Live thumbnail previews of your photo for each film tone for instant visual selection.
 
-1. Tap **Choose from Gallery**.
-2. Open **Filter** in the Editor and select a film look, or keep **No Filter**.
-3. Optionally adjust **Grain**.
-4. Open **Frame & Note** to choose a frame and configure the note.
-5. Press **Apply**.
-6. Save the result to the gallery or share it.
+- **Light & Color Adjustments:**
+  - **Exposure:** Fine-tune photo brightness.
+  - **Contrast:** Adjust dark and light tones.
+  - **Warmth (Temperature):** Add vintage warmth (golden tones) or coolness (cool blue).
+  - **Vignette:** Add classic lens edge darkening.
 
-The Editor preview and exported Result use the same processing pipeline so that the selected filter, grain, frame, and note remain consistent.
+- **Film Grain Controls:**
+  - No Grain, Subtle, Classic, Strong.
 
-## Privacy
+- **Frame Styles & Notes:**
+  - No Frame, Classic White, Black Border.
+  - Optional note with custom text, current date, text size, and automatic text color matching frame color.
 
-Image processing is performed locally on the device. Utsurikomi does not upload photos to a server and does not require an account.
+- **Interactive Before / After Split View:**
+  - Drag-to-compare split view slider with glassmorphism handle.
 
-Privacy policy:
+- **Pinch-to-Zoom & Pan Canvas (`InteractiveViewer`):**
+  - Zoom in with two fingers to inspect fine film grain and text details.
 
-<https://tavanquangkk.github.io/utsurikomi/privacy-policy.html>
+- **Collapsible Tools Drawer:**
+  - Collapse the bottom control drawer to 40px height to expand the photo preview canvas to full screen.
 
-## Technology
+- **Haptic Feedback & Micro-interactions:**
+  - Tactile vibration feedback on slider changes, LUT selection, button taps, and shutter clicks.
 
-- Flutter and Dart
-- [`image`](https://pub.dev/packages/image) for decoding, pixel processing, frame composition, text rendering, and JPEG encoding
-- Custom `.cube` LUT parsing and interpolation
-- `image_picker` for selecting a photo
-- `image_gallery_saver_plus` for saving results
-- `share_plus` for sharing results
-- `google_fonts` with Plus Jakarta Sans for the app UI
-- `Isolate.run` to keep image processing off the UI thread
+- **1-Tap Quick Reset ("Reset All"):**
+  - Instantly reset all adjustments and effects back to default values.
 
-## Project structure
+- **Privacy First:**
+  - 100% local processing. No account, no backend, no analytics, no ads, and no image uploads.
+
+---
+
+## User Flow
+
+1. Tap **Take Film Photo** to capture with the retro viewfinder or **Choose from Gallery**.
+2. Select a film LUT tone from the **Horizontal LUT Strip**.
+3. Open **Adjustments** to fine-tune Exposure, Contrast, Warmth, or Vignette.
+4. Adjust **Film Grain** level and select **Frame & Note** style.
+5. Tap **Apply** to render full-resolution result.
+6. Save to gallery or share directly to other apps.
+
+---
+
+## Technology Stack
+
+- **Flutter & Dart:** UI framework and state management.
+- **Rust (Native Core):** `image`, `rayon` (multi-threading), `ab_glyph` for SIMD-accelerated pixel processing, 3D LUT sampling, grain noise generation, and JPEG encoding.
+- **`dart:ffi`:** Low-latency C-ABI binding between Flutter and Rust.
+- **`camera`:** In-app retro viewfinder camera controller.
+- **`image_picker`:** Gallery photo selection using system photo picker.
+- **`image_gallery_saver_plus`:** Save outputs to system gallery.
+- **`share_plus`:** Native OS sharing.
+
+---
+
+## Project Structure
 
 ```text
 lib/
 ├── main.dart
 ├── data/
-│   └── tones.dart                 # Available film LUT definitions
+│   └── tones.dart                 # Film LUT definitions
 ├── models/
 │   └── film_tone.dart             # Film tone model
 ├── screens/
-│   ├── home_screen.dart           # Photo picker entry screen
-│   ├── editor_screen.dart         # Filter, grain, frame, and note controls
-│   └── result_screen.dart          # Save and share output
-└── services/
-    ├── cube_lut.dart              # .cube LUT parser
-    └── image_processor.dart       # Background image processing pipeline
+│   ├── home_screen.dart           # Entry screen (Take Photo / Gallery)
+│   ├── camera_screen.dart         # Retro film viewfinder screen
+│   ├── editor_screen.dart         # Filter, Adjustments, Grain & Frame controls
+│   └── result_screen.dart         # Developed film view, save & share
+├── services/
+│   ├── cube_lut.dart              # .cube LUT parser
+│   ├── image_processor.dart       # Main image processing entry point
+│   └── native_image_processor.dart # FFI binding to Rust native engine
+└── widgets/
+    ├── before_after_slider.dart   # Interactive Before/After split view
+    └── horizontal_lut_strip.dart  # VSCO-style LUT thumbnail carousel
 
-assets/
-└── luts/                          # Film LUT files
+rust/
+├── Cargo.toml                     # Rust crate definition (cdylib & staticlib)
+├── assets/fonts/                  # Embedded fonts for note rendering
+└── src/
+    └── lib.rs                     # High-performance Rust image engine
 
-test/
-└── widget_test.dart                # UI and image-processing tests
+scripts/
+└── build_android.sh               # Cargo NDK build script for Android JNI .so files
+
+android/app/src/main/jniLibs/      # Compiled native libraries (.so)
+├── arm64-v8a/
+├── armeabi-v7a/
+└── x86_64/
 ```
 
-## Requirements
+---
 
-- Flutter SDK compatible with Dart `^3.5.0`
-- Android SDK for Android builds
-- Xcode and CocoaPods for iOS builds
+## Development & Building
 
-Check the local setup with:
+### Requirements
+
+- Flutter SDK `^3.5.0`
+- Rust toolchain (`rustc` & `cargo`)
+- Android NDK (for building Rust Android binaries)
+
+### Building Rust Native Libraries
+
+To rebuild the Android `.so` shared libraries:
 
 ```bash
-flutter doctor
+chmod +x scripts/build_android.sh
+./scripts/build_android.sh
 ```
 
-## Getting started
-
-Clone the repository and install dependencies:
+To build the Rust library for macOS dev testing:
 
 ```bash
-git clone https://github.com/tavanquangkk/utsurikomi.git
-cd utsurikomi
+cd rust
+cargo build --release
+```
+
+### Running the App
+
+```bash
 flutter pub get
 flutter run
 ```
 
-Run on a connected Android device:
+Run on a specific connected Android device:
 
 ```bash
 flutter devices
 flutter run -d <device-id>
 ```
 
-## Validation
+---
 
-Format the Dart sources:
+## Validation & Testing
+
+Format Dart code:
 
 ```bash
 dart format lib test
 ```
 
-Run static analysis and tests:
+Run static analysis & unit tests:
 
 ```bash
 flutter analyze
 flutter test
 ```
 
-Build a debug APK for device testing:
+Build debug APK:
 
 ```bash
 flutter build apk --debug
 ```
 
-The output is generated at:
+Build production Release App Bundle (`.aab`) for Google Play Store:
 
-```text
-build/app/outputs/flutter-apk/app-debug.apk
+```bash
+flutter build appbundle --release
 ```
 
-## Release Android build
+---
 
-Release signing uses a local keystore. Do not commit signing files or passwords.
+## Privacy Policy
 
-1. Copy the signing template:
+Image processing is performed entirely on your device:
+<https://tavanquangkk.github.io/utsurikomi/privacy-policy.html>
 
-   ```bash
-   cp android/key.properties.example android/key.properties
-   ```
+---
 
-2. Fill in the local keystore values.
-3. Place the upload keystore at the configured path.
-4. Increase the Flutter build number in `pubspec.yaml`.
-5. Build the App Bundle:
+## Version
 
-   ```bash
-   flutter build appbundle --release
-   ```
-
-The generated bundle is:
-
-```text
-build/app/outputs/bundle/release/app-release.aab
-```
-
-Every upload to Google Play must use a new, unused version code.
-
-## Android and iOS behavior
-
-- Android uses the system photo picker where available and does not request broad photo-library read access.
-- iOS includes photo-library usage descriptions in `Info.plist`.
-- Image editing is local and does not require network access after the app and font resources are available.
-
-## Current version
-
-The current Flutter package version is defined in `pubspec.yaml`:
-
-```text
-1.0.0+8
-```
-
-The number after `+` is the Android version code and must be increased for every new Google Play upload.
-
-## License
-
-This repository does not currently declare an open-source license. Contact the repository owner before redistributing the source or assets.
+Current version in `pubspec.yaml`: `1.0.0+8`
