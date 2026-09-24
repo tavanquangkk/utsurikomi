@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import 'cube_lut.dart';
+import 'native_image_processor.dart';
 
 enum GrainLevel {
   off(0, 'No Grain'),
@@ -46,6 +47,11 @@ class NoteOptions {
 class ImageProcessor {
   static final Map<String, CubeLut> _lutCache = {};
 
+  static Future<CubeLut> getLut(String lutAssetPath) async =>
+      _lutCache[lutAssetPath] ??= await CubeLut.fromAsset(lutAssetPath);
+
+  static String formatDate(DateTime date) => _formatDate(date);
+
   static Future<({String path, Uint8List bytes})> applyTone({
     required Uint8List sourceBytes,
     required String lutAssetPath,
@@ -54,6 +60,10 @@ class ImageProcessor {
     required FrameStyle frame,
     NoteOptions note = const NoteOptions(),
     bool applyFilter = true,
+    double exposure = 0.0,
+    double contrast = 0.0,
+    double warmth = 0.0,
+    double vignette = 0.0,
   }) async {
     final outputBytes = await processBytes(
       sourceBytes: sourceBytes,
@@ -63,6 +73,10 @@ class ImageProcessor {
       frame: frame,
       note: note,
       applyFilter: applyFilter,
+      exposure: exposure,
+      contrast: contrast,
+      warmth: warmth,
+      vignette: vignette,
       maxDimension: null,
     );
     final dir = await getTemporaryDirectory();
@@ -79,12 +93,37 @@ class ImageProcessor {
     FrameStyle frame = FrameStyle.none,
     NoteOptions note = const NoteOptions(),
     bool applyFilter = true,
+    double exposure = 0.0,
+    double contrast = 0.0,
+    double warmth = 0.0,
+    double vignette = 0.0,
     int? maxDimension = 2000,
   }) async {
+    if (NativeImageProcessor.isNativeSupported) {
+      return NativeImageProcessor.processBytes(
+        sourceBytes: sourceBytes,
+        lutAssetPath: lutAssetPath,
+        toneId: toneId,
+        grain: grain,
+        frame: frame,
+        note: note,
+        applyFilter: applyFilter,
+        exposure: exposure,
+        contrast: contrast,
+        warmth: warmth,
+        vignette: vignette,
+        maxDimension: maxDimension,
+      );
+    }
+
+    final bool hasAdjustments =
+        exposure != 0.0 || contrast != 0.0 || warmth != 0.0 || vignette > 0.0;
+
     if (!applyFilter &&
         grain == GrainLevel.off &&
         frame == FrameStyle.none &&
-        !note.enabled) {
+        !note.enabled &&
+        !hasAdjustments) {
       return sourceBytes;
     }
 
@@ -124,6 +163,7 @@ class ImageProcessor {
   }) {
     final decoded = img.decodeImage(sourceBytes);
     if (decoded == null) throw Exception('Unable to read image');
+    img.bakeOrientation(decoded);
 
     // Resize large images to keep processing responsive.
     final largestDimension =

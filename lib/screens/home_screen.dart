@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'camera_screen.dart';
 import 'editor_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,6 +26,15 @@ class _HomeScreenState extends State<HomeScreen> {
           imageBytes: imageBytes,
           initialToneIndex: 0,
         ),
+      ),
+    );
+  }
+
+  void _openCamera() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CameraScreen(),
       ),
     );
   }
@@ -80,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     child: const Icon(
-                      Icons.add_photo_alternate_outlined,
+                      Icons.camera_outlined,
                       size: 58,
                       color: Color(0xFFC99A5B),
                     ),
@@ -89,24 +99,52 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _pickImage,
-                  style: ElevatedButton.styleFrom(),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.add_photo_alternate_outlined, size: 21),
-                      SizedBox(width: 10),
-                      Text('Choose from Gallery',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w700)),
-                    ],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _openCamera,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC99A5B),
+                        foregroundColor: Colors.black,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.camera_alt_rounded, size: 22),
+                          SizedBox(width: 10),
+                          Text('Take Film Photo',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: _pickImage,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.white38),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_photo_alternate_outlined, size: 20, color: Colors.white70),
+                          SizedBox(width: 10),
+                          Text('Choose from Gallery',
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
